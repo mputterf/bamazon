@@ -17,12 +17,14 @@ var connection = mysql.createConnection({
     database: "bamazon"
 });
 
+// When connection to the DB was successful, give the user the main menu
 connection.connect(function (err) {
     if (err) throw err;
     // console.log(dbPasswd.passwd);
     runWelcome();
 });
 
+// Main menu. Ask the user if they want to shop or quit
 function runWelcome() {
 
     inquirer.prompt({
@@ -42,6 +44,7 @@ function runWelcome() {
     });
 }
 
+// We'll ask the user what they want, how many they want, and search the DB for it
 function runSearch() {
     inquirer.prompt([
         {
@@ -74,6 +77,7 @@ function runSearch() {
 
             // Check if item ID is valid
             if (res && res.length) {
+                // Ask if the user is sure
                 inquirer.prompt([
                     {
                         name: "confirmPurchase",
@@ -82,18 +86,56 @@ function runSearch() {
                         default: true
                     }
                 ]).then(function (inquirerResponse) {
-                    if (inquirerResponse.confirm) {
-                        runPurchase();
+                    // If the user is sure of their purchase, we'll update the db
+                    if (inquirerResponse.confirmPurchase) {
+                        // Things we'll need to complete the checkout
+                        var dbID = res[0].item_id;
+                        var quantToBuy = answer.quantity;
+                        var amountInDB = res[0].stock_quantity;
+                        var unitPrice = res[0].price;
+                        runPurchase(dbID, quantToBuy, amountInDB, unitPrice);
                     } else {
+                        // If the user is unsure, return to main menu
                         runWelcome();
                     }
                 });
 
             } else {
+                // If the user enters an invalid ID, return to main menu, stop transaction
                 console.log("Item ID is not valid.");
                 runWelcome();
             }
 
         });
     });
+}
+
+function runPurchase(dbID, quantToBuy, amountInDB, unitPrice) {
+    // console.log(dbID);
+    // console.log(quantToBuy);
+
+    // Make sure enough items are in stock
+    if (quantToBuy <= amountInDB) {
+        // We'll figure out how may items are left in the DB and update it with the new amount left in stock
+        var updateAmount = amountInDB - quantToBuy;
+
+        var query = "UPDATE products SET ? WHERE ?";
+        connection.query(query, [{ stock_quantity: updateAmount }, { item_id: dbID }], function (err, res) {
+            // If the DB was successfully updated, we'll let the customer know how much they spent
+            if (res.affectedRows > 0) {
+                console.log("Purchase processed.");
+                console.log("Your total is $" + (quantToBuy * unitPrice));
+            } else {
+                // In case something goes wrong updating the DB
+                console.log("An error has occured");
+                throw err;
+            }
+            runWelcome();
+        });
+
+    } else {
+        // If not enough items are in stock, send them back to the main menu
+        console.log("Insufficient quantity!");
+        runWelcome();
+    }
 }
