@@ -20,8 +20,27 @@ var connection = mysql.createConnection({
 connection.connect(function (err) {
     if (err) throw err;
     // console.log(dbPasswd.passwd);
-    runSearch();
+    runWelcome();
 });
+
+function runWelcome() {
+
+    inquirer.prompt({
+        name: "action",
+        type: "list",
+        message: "What would you like to do?",
+        choices: [
+            "Shop",
+            "Quit"
+        ]
+    }).then(function (selection) {
+        if (selection.action === "Shop") {
+            runSearch();
+        } else {
+            connection.end();
+        }
+    });
+}
 
 function runSearch() {
     inquirer.prompt([
@@ -37,7 +56,7 @@ function runSearch() {
             }
         },
         {
-            name: "quatity",
+            name: "quantity",
             type: "input",
             message: "Enter the amount you want to buy.",
             validate: function (value) {
@@ -51,12 +70,30 @@ function runSearch() {
         var query = "SELECT * FROM products WHERE item_id= ?";
 
         connection.query(query, [answer.productID], function (err, res) {
-            for (var i = 0; i < res.length; i++) {
-                console.log("You have slected " + res[i].product_name);
+            // console.log(res);
+
+            // Check if item ID is valid
+            if (res && res.length) {
+                inquirer.prompt([
+                    {
+                        name: "confirmPurchase",
+                        type: "confirm",
+                        message: "You have selected " + res[0].product_name + ". Are you sure you want to buy " + answer.quantity + "?",
+                        default: true
+                    }
+                ]).then(function (inquirerResponse) {
+                    if (inquirerResponse.confirm) {
+                        runPurchase();
+                    } else {
+                        runWelcome();
+                    }
+                });
+
+            } else {
+                console.log("Item ID is not valid.");
+                runWelcome();
             }
 
-            // Will move this once shopping logic is done
-            connection.end();
         });
     });
 }
