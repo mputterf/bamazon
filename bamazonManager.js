@@ -62,13 +62,12 @@ function runWelcome() {
 }
 
 function viewProducts() {
-    connection.query("SELECT * FROM products", function (err, res) {
+    var query = "SELECT * FROM products";
+    connection.query(query, function (err, res) {
         if (err) throw err;
         // Log all results of the SELECT statement
         console.table(res, ["item_id", "product_name", "price", "stock_quantity"]);
-        // for (var i=0; i<res.length; i++){
 
-        // }
         runWelcome()
     });
 }
@@ -85,8 +84,62 @@ function viewLowInventory() {
 
 function addToInventory() {
 
+    runWelcome();
 }
 
 function addNewProduct() {
 
+    inquirer.prompt([
+        {
+            name: "itemName",
+            type: "input",
+            message: "Please enter the name of the item to add:"
+        },
+        {
+            name: "department",
+            type: "input",
+            message: "Which department will this be added to?"
+        },
+        {
+            name: "price",
+            type: "input",
+            message: "Enter the unit price:",
+            validate: function (value) {
+                if (isNaN(value) === false) {
+                    return true;
+                }
+                return false;
+            }
+        },
+        {
+            name: "quantity",
+            type: "input",
+            message: "Enter the inital quantity:",
+            validate: function (value) {
+                if (isNaN(value) === false) {
+                    return true;
+                }
+                return false;
+            }
+        }
+    ]).then(function (inquirerResponse) {
+        var insertItem = {
+            product_name: inquirerResponse.itemName,
+            department_name: inquirerResponse.department,
+            price: inquirerResponse.price,
+            stock_quantity: inquirerResponse.quantity
+        };
+        // console.log(insertItem);
+        var query = "INSERT INTO products SET ?";
+        connection.query(query, [insertItem], function (err, res) {
+            if (res) {
+                console.log("Added successfully");
+            } else {
+                console.log("An error occured");
+                throw err;
+            }
+
+            runWelcome();
+        });
+    });
 }
