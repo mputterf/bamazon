@@ -68,7 +68,7 @@ function viewProducts() {
         // Log all results of the SELECT statement
         console.table(res, ["item_id", "product_name", "price", "stock_quantity"]);
 
-        runWelcome()
+        runWelcome();
     });
 }
 
@@ -83,8 +83,50 @@ function viewLowInventory() {
 }
 
 function addToInventory() {
+    var productNames = [];
+    var query = "SELECT product_name, stock_quantity FROM products";
+    connection.query(query, function (err, res) {
+        for (var i = 0; i < res.length; i++) {
+            productNames.push(res[i].product_name);
+        }
+        // console.log(productNames);
+        console.log(res);
 
-    runWelcome();
+        inquirer.prompt([
+            {
+                name: "selectItem",
+                type: "list",
+                message: "Which item would you like to add more of?",
+                choices: productNames
+            },
+            {
+                name: "quantityToAdd",
+                type: "input",
+                message: "How much would you like to add?",
+                validate: function (value) {
+                    if (isNaN(value) === false) {
+                        return true;
+                    }
+                    return false;
+                }
+            }
+        ]).then(function (inquirerResponse) {
+            // my convoluted way to update the quantity
+            var productUpdate = parseInt(res[productNames.indexOf(inquirerResponse.selectItem)].stock_quantity) + parseInt(inquirerResponse.quantityToAdd);
+            // console.log(productUpdate);
+            var query = "UPDATE products SET ? WHERE ?";
+            connection.query(query, [{ stock_quantity: productUpdate }, { product_name: inquirerResponse.selectItem }], function (err, res) {
+                if (res) {
+                    console.log("Sucessfully updated");
+                } else {
+                    console.log("An error occured");
+                    throw err;
+                }
+
+                runWelcome();
+            });
+        });
+    });
 }
 
 function addNewProduct() {
