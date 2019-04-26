@@ -65,21 +65,52 @@ function viewProducts() {
     var query = "SELECT * FROM products";
     connection.query(query, function (err, res) {
         if (err) throw err;
-        // Log all results of the SELECT statement
-        console.table(res, ["item_id", "product_name", "price", "stock_quantity"]);
+        var resObj = {};
 
+        function Item(product_name, department_name, price, stock_quantity) {
+            // this.item_id = item_id;
+            this.product_name = product_name;
+            this.department_name = department_name;
+            this.price = price;
+            this.stock_quantity = stock_quantity;
+        }
+        // Log all results of the SELECT statement
+        // console.table(res, ["item_id", "product_name", "price", "stock_quantity"]);
+        for (var i = 0; i < res.length; i++) {
+            resObj[res[i].item_id] = new Item(res[i].product_name, res[i].department_name, res[i].price, res[i].stock_quantity);
+        }
+        console.table(resObj);
         runWelcome();
     });
 }
 
 function viewLowInventory() {
     var query = "SELECT * FROM products WHERE stock_quantity < 5";
+    // connection.query(query, function (err, res) {
+
+    //     console.table(res, ["item_id", "product_name", "stock_quantity"]);
+    // });
+
+    // runWelcome();
     connection.query(query, function (err, res) {
+        if (err) throw err;
+        var resObj = {};
 
-        console.table(res, ["item_id", "product_name", "stock_quantity"]);
+        function Item(product_name, department_name, price, stock_quantity) {
+            // this.item_id = item_id;
+            this.product_name = product_name;
+            this.department_name = department_name;
+            this.price = price;
+            this.stock_quantity = stock_quantity;
+        }
+        // Log all results of the SELECT statement
+        // console.table(res, ["item_id", "product_name", "price", "stock_quantity"]);
+        for (var i = 0; i < res.length; i++) {
+            resObj[res[i].item_id] = new Item(res[i].product_name, res[i].department_name, res[i].price, res[i].stock_quantity);
+        }
+        console.table(resObj);
+        runWelcome();
     });
-
-    runWelcome();
 }
 
 function addToInventory() {
