@@ -121,7 +121,7 @@ function addToInventory() {
             productNames.push(res[i].product_name);
         }
         // console.log(productNames);
-        console.log(res);
+        // console.log(res);
 
         inquirer.prompt([
             {
